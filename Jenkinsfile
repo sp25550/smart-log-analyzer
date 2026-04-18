@@ -1,4 +1,4 @@
-﻿cd "D:\python programes\smart-log-analyzer"
+cd "D:\python programes\smart-log-analyzer"
 
 $content = @'
 pipeline {
