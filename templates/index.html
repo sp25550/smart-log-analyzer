@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Log Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Smart Log Analyzer</h1>
+
+    <div class="card">
+        <form method="POST" enctype="multipart/form-data">
+            <label>Upload Log File</label>
+            <input type="file" name="logfile" required>
+
+            <label>Search</label>
+            <input type="text" name="search" placeholder="Enter keyword...">
+
+            <label>Filter</label>
+            <select name="filter">
+                <option value="">All</option>
+                <option value="ERROR">ERROR</option>
+                <option value="WARNING">WARNING</option>
+                <option value="INFO">INFO</option>
+            </select>
+
+            <button type="submit">Analyze Logs</button>
+        </form>
+    </div>
+
+    {% if result %}
+    <div class="card">
+        <h2>Summary</h2>
+      <div class="summary">
+    <div class="box error">Errors<br>{{ result.errors }}</div>
+    <div class="box warning">Warnings<br>{{ result.warnings }}</div>
+    <div class="box info">Info<br>{{ result.info }}</div>
+    <div class="box total">Total<br>{{ result.total }}</div>
+</div>
+
+        <p><b>Error Rate:</b> {{ result.error_rate }}%</p>
+
+        {% if result.freq_error %}
+            <p><b>Most Frequent Error:</b><br>
+            {{ result.freq_error[0] }} ({{ result.freq_error[1] }} times)</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Error Timestamps</h3>
+        <ul>
+            {% for t in result.timestamps %}
+                <li>{{ t }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>All Errors</h3>
+        <ul>
+            {% for e in result.error_list %}
+                <li>{{ e }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>Critical Errors</h3>
+        <ul>
+            {% for c in result.critical %}
+                <li class="critical">{{ c }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

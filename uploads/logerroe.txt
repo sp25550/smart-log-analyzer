@@ -1,0 +1,20 @@
+2026-04-18 10:00:01 INFO Server started successfully
+2026-04-18 10:01:12 INFO User login successful
+2026-04-18 10:02:30 WARNING Disk usage is high
+2026-04-18 10:03:45 ERROR Database connection failed
+2026-04-18 10:04:10 INFO Scheduled backup started
+2026-04-18 10:05:22 ERROR Database connection failed
+2026-04-18 10:06:30 WARNING Memory usage high
+2026-04-18 10:07:50 ERROR Timeout error while fetching data
+2026-04-18 10:08:15 INFO User logout
+2026-04-18 10:09:40 ERROR System crash detected
+2026-04-18 10:10:05 INFO Restarting service
+2026-04-18 10:11:22 ERROR Database connection failed
+2026-04-18 10:12:33 WARNING CPU temperature high
+2026-04-18 10:13:44 ERROR Fatal exception occurred
+2026-04-18 10:14:55 INFO Server running
+2026-04-18 10:15:30 ERROR Timeout error while fetching data
+2026-04-18 10:16:10 INFO Health check passed
+2026-04-18 10:17:25 ERROR Disk read failed
+2026-04-18 10:18:40 WARNING Low disk space
+2026-04-18 10:19:55 INFO Monitoring active
