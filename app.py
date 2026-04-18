@@ -49,15 +49,13 @@ def analyze_logs(file_path):
         message = " ".join(parts[3:])
         severity = get_severity(line)
 
-        log_entry = {
+        structured_logs.append({
             "date": date,
             "time": time,
             "level": level,
             "message": message,
             "severity": severity
-        }
-
-        structured_logs.append(log_entry)
+        })
 
         if level == "ERROR":
             errors += 1

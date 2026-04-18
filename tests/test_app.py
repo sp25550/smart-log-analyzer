@@ -2,18 +2,20 @@ import sys
 import os
 import tempfile
 
+# add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import analyze_logs
 
+
 def create_sample_log(content):
     temp = tempfile.NamedTemporaryFile(delete=False, mode='w')
-    temp.write(content)
-    temp.close()
-    return temp.name
+    try:
+        temp.write(content)
+        return temp.name
+    finally:
+        temp.close()
 
-
-# ---------------- BASIC TESTS ----------------
 
 def test_error_count():
     log = """2026-04-18 10:00:01 ERROR Database failed
@@ -55,12 +57,8 @@ def test_severity_detection():
     assert result["logs"][0]["severity"] == "HIGH"
 
 
-# ---------------- EXTRA TESTS ----------------
-
 def test_empty_file():
-    log = ""
-
-    file_path = create_sample_log(log)
+    file_path = create_sample_log("")
     result = analyze_logs(file_path)
 
     assert result["total"] == 0
@@ -91,9 +89,7 @@ def test_top_error():
 
 
 def test_invalid_format():
-    log = """INVALID LOG LINE"""
-
-    file_path = create_sample_log(log)
+    file_path = create_sample_log("INVALID LOG LINE")
     result = analyze_logs(file_path)
 
     assert result["total"] == 0
