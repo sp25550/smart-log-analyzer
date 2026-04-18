@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        IMAGE_NAME = "smart-log-analyzer"
     }
     stages {
         stage('Clone') {
@@ -26,11 +27,26 @@ pipeline {
                 """
             }
         }
-        stage('Start Flask App') {
+        stage('Code Quality (flake8)') {
             steps {
                 bat """
-                echo Starting Flask server...
-                start "FlaskApp" /min %PYTHON% app.py
+                %PYTHON% -m flake8 . --ignore=W292,W293,E402 || exit /b 0
+                """
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                bat """
+                docker build -t %IMAGE_NAME% .
+                """
+            }
+        }
+        stage('Run Docker Container') {
+            steps {
+                bat """
+                docker stop %IMAGE_NAME%-container || exit /b 0
+                docker rm %IMAGE_NAME%-container || exit /b 0
+                docker run -d -p 5000:5000 --name %IMAGE_NAME%-container %IMAGE_NAME%
                 """
             }
         }
@@ -48,13 +64,6 @@ pipeline {
                 """
             }
         }
-        stage('Code Quality (flake8)') {
-            steps {
-                bat """
-                %PYTHON% -m flake8 . --ignore=W292,W293,E402 || exit /b 0
-                """
-            }
-        }
         stage('Build') {
             steps {
                 echo "Build completed successfully"
@@ -66,6 +75,10 @@ pipeline {
             echo "Pipeline SUCCESS ✔"
         }
         failure {
+            bat """
+            docker stop %IMAGE_NAME%-container || exit /b 0
+            docker rm %IMAGE_NAME%-container || exit /b 0
+            """
             echo "Pipeline FAILED ❌"
         }
     }
