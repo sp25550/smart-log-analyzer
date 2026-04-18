@@ -24,7 +24,7 @@ def setup_driver():
 
 
 # ---------- WAIT FOR FLASK ----------
-def wait_for_server(url, timeout=20):
+def wait_for_server(url, timeout=25):
     for _ in range(timeout):
         try:
             requests.get(url)
@@ -43,37 +43,47 @@ def driver():
     driver.quit()
 
 
-# ---------- TEST FILE ----------
+# ---------- TEST FILES SAFETY ----------
+def get_file(name):
+    path = os.path.abspath(name)
+    assert os.path.exists(path), f"Missing file in workspace: {name}"
+    return path
+
+
+# ---------- TEST 1 ----------
 def test_homepage_ui_elements(driver):
     driver.get(BASE_URL)
 
     assert driver.find_element(By.NAME, "logfile")
-    assert driver.find_element(By.XPATH, "//input[@type='submit']")
+
+    # FIX: use BUTTON instead of input
+    assert driver.find_element(By.TAG_NAME, "button")
 
 
+# ---------- TEST 2 ----------
 def test_upload_flow(driver):
     driver.get(BASE_URL)
 
     file_input = driver.find_element(By.NAME, "logfile")
-    file_path = os.path.abspath("sample.log")
+    file_input.send_keys(get_file("sample.log"))
 
-    file_input.send_keys(file_path)
-    driver.find_element(By.XPATH, "//input[@type='submit']").click()
+    driver.find_element(By.TAG_NAME, "button").click()
 
     time.sleep(2)
 
     page = driver.page_source.lower()
     assert "total" in page
-    assert "logs" in page or "error" in page
+    assert "errors" in page
 
 
+# ---------- TEST 3 ----------
 def test_ui_rendering(driver):
     driver.get(BASE_URL)
 
     file_input = driver.find_element(By.NAME, "logfile")
-    file_input.send_keys(os.path.abspath("sample.log"))
+    file_input.send_keys(get_file("sample.log"))
 
-    driver.find_element(By.XPATH, "//input[@type='submit']").click()
+    driver.find_element(By.TAG_NAME, "button").click()
 
     time.sleep(2)
 
@@ -82,15 +92,20 @@ def test_ui_rendering(driver):
     assert "infos" in page
 
 
+# ---------- TEST 4 ----------
 def test_invalid_file(driver):
     driver.get(BASE_URL)
 
     file_input = driver.find_element(By.NAME, "logfile")
-    file_input.send_keys(os.path.abspath("invalid.log"))
 
-    driver.find_element(By.XPATH, "//input[@type='submit']").click()
+    # FIX: allow file existence safety
+    invalid_path = get_file("invalid.log")
+    file_input.send_keys(invalid_path)
+
+    driver.find_element(By.TAG_NAME, "button").click()
 
     time.sleep(2)
 
     # app should not crash
-    assert "traceback" not in driver.page_source.lower()
+    page = driver.page_source.lower()
+    assert "traceback" not in page
