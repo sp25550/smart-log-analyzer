@@ -3,6 +3,7 @@ pipeline {
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
         IMAGE_NAME = "smart-log-analyzer"
+        DOCKERHUB_USERNAME = "YOUR_DOCKERHUB_USERNAME"
     }
     stages {
         stage('Clone') {
@@ -39,15 +40,15 @@ pipeline {
                 bat """
                 docker stop %IMAGE_NAME%-container || exit /b 0
                 docker rm %IMAGE_NAME%-container || exit /b 0
-                docker rmi %IMAGE_NAME% || exit /b 0
-                docker build -t %IMAGE_NAME% .
+                docker rmi %DOCKERHUB_USERNAME%/%IMAGE_NAME% || exit /b 0
+                docker build -t %DOCKERHUB_USERNAME%/%IMAGE_NAME% .
                 """
             }
         }
         stage('Run Docker Container') {
             steps {
                 bat """
-                docker run -d -p 5000:5000 --name %IMAGE_NAME%-container %IMAGE_NAME%
+                docker run -d -p 5000:5000 --name %IMAGE_NAME%-container %DOCKERHUB_USERNAME%/%IMAGE_NAME%
                 """
             }
         }
@@ -65,15 +66,30 @@ pipeline {
                 """
             }
         }
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    bat """
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                    docker push %DOCKERHUB_USERNAME%/%IMAGE_NAME%
+                    docker logout
+                    """
+                }
+            }
+        }
         stage('Build') {
             steps {
-                echo "Build completed successfully"
+                echo "Build and Deployment completed successfully"
             }
         }
     }
     post {
         success {
-            echo "Pipeline SUCCESS ✔"
+            echo "Pipeline SUCCESS ✔ - Image pushed to Docker Hub"
         }
         failure {
             bat """
