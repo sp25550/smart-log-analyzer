@@ -7,8 +7,8 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+# Ensure upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 def get_severity(line):
@@ -31,8 +31,19 @@ def analyze_logs(file_path):
     structured_logs = []
     error_messages = []
 
-    with open(file_path, "r") as file:
-        lines = file.readlines()
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+    except Exception:
+        return {
+            "total": 0,
+            "errors": 0,
+            "warnings": 0,
+            "infos": 0,
+            "error_rate": 0,
+            "logs": [],
+            "top_errors": [],
+        }
 
     for line in lines:
         parts = line.strip().split()
@@ -50,22 +61,20 @@ def analyze_logs(file_path):
         message = " ".join(parts[3:])
         severity = get_severity(line)
 
-        structured_logs.append(
-            {
-                "date": date,
-                "time": time,
-                "level": level,
-                "message": message,
-                "severity": severity,
-            }
-        )
+        structured_logs.append({
+            "date": date,
+            "time": time,
+            "level": level,
+            "message": message,
+            "severity": severity,
+        })
 
         if level == "ERROR":
             errors += 1
             error_messages.append(message)
         elif level == "WARNING":
             warnings += 1
-        elif level == "INFO":
+        else:
             infos += 1
 
     total = len(structured_logs)
@@ -89,9 +98,9 @@ def index():
     result = None
 
     if request.method == "POST":
-        file = request.files["logfile"]
+        file = request.files.get("logfile")
 
-        if file:
+        if file and file.filename != "":
             path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
             file.save(path)
 
@@ -101,4 +110,5 @@ def index():
 
 
 if __name__ == "__main__":
+    # IMPORTANT for Jenkins + Selenium stability
     app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
