@@ -1,4 +1,4 @@
-pipeline {
+﻿pipeline {
     agent any
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
@@ -61,18 +61,18 @@ pipeline {
             }
         }
         stage('Push to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
-                    bat "docker push xxxxxyyyy/smart-log-analyzer"
-                    bat "docker logout"
-                }
-            }
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'docker-hub-creds',
+                                         usernameVariable: 'DOCKER_USER',
+                                         passwordVariable: 'DOCKER_PASS')]) {
+            bat """
+            echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+            docker push xxxxxyyyy/smart-log-analyzer:latest
+            """
         }
+    }
+}
+        
         stage('Build') {
             steps {
                 echo "Build and Deployment completed successfully"
