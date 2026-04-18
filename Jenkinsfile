@@ -35,19 +35,15 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                bat """
-                docker stop smart-log-analyzer-container || exit /b 0
-                docker rm smart-log-analyzer-container || exit /b 0
-                docker rmi xxxxxyyyy/smart-log-analyzer || exit /b 0
-                docker build -t xxxxxyyyy/smart-log-analyzer .
-                """
+                bat "docker stop smart-log-analyzer-container || exit /b 0"
+                bat "docker rm smart-log-analyzer-container || exit /b 0"
+                bat "docker rmi xxxxxyyyy/smart-log-analyzer || exit /b 0"
+                bat "docker build -t xxxxxyyyy/smart-log-analyzer ."
             }
         }
         stage('Run Docker Container') {
             steps {
-                bat """
-                docker run -d -p 5000:5000 --name smart-log-analyzer-container xxxxxyyyy/smart-log-analyzer
-                """
+                bat "docker run -d -p 5000:5000 --name smart-log-analyzer-container xxxxxyyyy/smart-log-analyzer"
             }
         }
         stage('Wait for Flask Server') {
@@ -71,11 +67,9 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    bat """
-                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                    docker push xxxxxyyyy/smart-log-analyzer
-                    docker logout
-                    """
+                    bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
+                    bat "docker push xxxxxyyyy/smart-log-analyzer"
+                    bat "docker logout"
                 }
             }
         }
@@ -90,10 +84,8 @@ pipeline {
             echo "Pipeline SUCCESS - Image pushed to Docker Hub"
         }
         failure {
-            bat """
-            docker stop smart-log-analyzer-container || exit /b 0
-            docker rm smart-log-analyzer-container || exit /b 0
-            """
+            bat "docker stop smart-log-analyzer-container || exit /b 0"
+            bat "docker rm smart-log-analyzer-container || exit /b 0"
             echo "Pipeline FAILED"
         }
     }
