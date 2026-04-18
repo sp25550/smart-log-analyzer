@@ -1,4 +1,4 @@
-pipeline {
+﻿pipeline {
     agent any
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
@@ -87,14 +87,14 @@ pipeline {
     }
     post {
         success {
-            echo "Pipeline SUCCESS ✔ - Image pushed to Docker Hub"
+            echo "Pipeline SUCCESS - Image pushed to Docker Hub"
         }
         failure {
             bat """
             docker stop smart-log-analyzer-container || exit /b 0
             docker rm smart-log-analyzer-container || exit /b 0
             """
-            echo "Pipeline FAILED ❌"
+            echo "Pipeline FAILED"
         }
     }
 }
