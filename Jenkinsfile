@@ -37,6 +37,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 bat """
+                docker stop %IMAGE_NAME%-container || exit /b 0
+                docker rm %IMAGE_NAME%-container || exit /b 0
+                docker rmi %IMAGE_NAME% || exit /b 0
                 docker build -t %IMAGE_NAME% .
                 """
             }
@@ -44,8 +47,6 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 bat """
-                docker stop %IMAGE_NAME%-container || exit /b 0
-                docker rm %IMAGE_NAME%-container || exit /b 0
                 docker run -d -p 5000:5000 --name %IMAGE_NAME%-container %IMAGE_NAME%
                 """
             }
