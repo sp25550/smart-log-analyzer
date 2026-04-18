@@ -38,17 +38,17 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 bat """
-                docker stop %IMAGE_NAME%-container || exit /b 0
-                docker rm %IMAGE_NAME%-container || exit /b 0
-                docker rmi %DOCKERHUB_USERNAME%/%IMAGE_NAME% || exit /b 0
-                docker build -t %DOCKERHUB_USERNAME%/%IMAGE_NAME% .
+                docker stop smart-log-analyzer-container || exit /b 0
+                docker rm smart-log-analyzer-container || exit /b 0
+                docker rmi xxxxxyyyy/smart-log-analyzer || exit /b 0
+                docker build -t xxxxxyyyy/smart-log-analyzer .
                 """
             }
         }
         stage('Run Docker Container') {
             steps {
                 bat """
-                docker run -d -p 5000:5000 --name %IMAGE_NAME%-container %DOCKERHUB_USERNAME%/%IMAGE_NAME%
+                docker run -d -p 5000:5000 --name smart-log-analyzer-container xxxxxyyyy/smart-log-analyzer
                 """
             }
         }
@@ -75,7 +75,7 @@ pipeline {
                 )]) {
                     bat """
                     echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                    docker push %DOCKERHUB_USERNAME%/%IMAGE_NAME%
+                    docker push xxxxxyyyy/smart-log-analyzer
                     docker logout
                     """
                 }
@@ -93,8 +93,8 @@ pipeline {
         }
         failure {
             bat """
-            docker stop %IMAGE_NAME%-container || exit /b 0
-            docker rm %IMAGE_NAME%-container || exit /b 0
+            docker stop smart-log-analyzer-container || exit /b 0
+            docker rm smart-log-analyzer-container || exit /b 0
             """
             echo "Pipeline FAILED ❌"
         }
