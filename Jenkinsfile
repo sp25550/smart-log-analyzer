@@ -3,7 +3,7 @@ pipeline {
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
         IMAGE_NAME = "smart-log-analyzer"
-        DOCKERHUB_USERNAME = "YOUR_DOCKERHUB_USERNAME"
+        DOCKERHUB_USERNAME = "xxxxxyyyy"
     }
     stages {
         stage('Clone') {
