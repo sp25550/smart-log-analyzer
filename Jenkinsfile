@@ -43,7 +43,7 @@ pipeline {
         stage('Docker Prep (Fix TLS Issue)') {
             steps {
                 bat """
-                docker pull python:3.10-slim || echo "Pull skipped (cached or network issue)"
+                docker pull python:3.10-slim || echo "Using cached image"
                 """
             }
         }
@@ -67,9 +67,9 @@ pipeline {
 
         stage('Wait for Flask App') {
             steps {
-                bat """
-                timeout /t 10
-                """
+                script {
+                    sleep time: 10, unit: 'SECONDS'
+                }
             }
         }
 
@@ -79,7 +79,7 @@ pipeline {
                 if exist tests\\test_ui.py (
                     %PYTHON% -m pytest -v tests/test_ui.py || exit /b 0
                 ) else (
-                    echo "UI tests not found"
+                    echo UI tests not found
                 )
                 """
             }
