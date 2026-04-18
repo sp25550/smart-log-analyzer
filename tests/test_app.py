@@ -1,13 +1,10 @@
 import sys
 import os
 import tempfile
-import pytest
 
-# Fix import path FIRST
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import analyze_logs
-
 
 def create_sample_log(content):
     temp = tempfile.NamedTemporaryFile(delete=False, mode='w')
