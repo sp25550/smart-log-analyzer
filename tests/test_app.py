@@ -1,11 +1,12 @@
 import sys
 import os
+import tempfile
+import pytest
 
-# Fix import path
+# Fix import path FIRST
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import analyze_logs
-import tempfile
 
 
 def create_sample_log(content):
