@@ -9,9 +9,11 @@ from selenium.webdriver.chrome.options import Options
 BASE_URL = "http://127.0.0.1:5000"
 
 
+# ---------- DRIVER SETUP ----------
 def setup_driver():
     options = Options()
     options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
@@ -20,7 +22,8 @@ def setup_driver():
     return driver
 
 
-def wait_for_server(url, timeout=30):
+# ---------- WAIT FOR FLASK SERVER ----------
+def wait_for_server(url, timeout=40):
     for _ in range(timeout):
         try:
             r = requests.get(url, timeout=2)
@@ -31,16 +34,70 @@ def wait_for_server(url, timeout=30):
     return False
 
 
+# ---------- FIXTURE ----------
 @pytest.fixture(scope="module")
 def driver():
     assert wait_for_server(BASE_URL), "Flask server not running"
+
     driver = setup_driver()
     yield driver
     driver.quit()
 
 
+# ---------- TEST 1: HOMEPAGE LOAD ----------
 def test_homepage_ui_elements(driver):
     driver.get(BASE_URL)
 
     assert driver.find_element(By.NAME, "logfile")
     assert driver.find_element(By.XPATH, "//button[contains(text(),'Analyze')]")
+
+
+# ---------- TEST 2: FILE UPLOAD FLOW ----------
+def test_upload_flow(driver):
+    driver.get(BASE_URL)
+
+    file_input = driver.find_element(By.NAME, "logfile")
+    file_path = os.path.abspath("sample.log")
+
+    file_input.send_keys(file_path)
+
+    driver.find_element(By.XPATH, "//button[contains(text(),'Analyze')]").click()
+
+    time.sleep(3)
+
+    page = driver.page_source.lower()
+
+    assert "total" in page
+    assert "error" in page or "logs" in page
+
+
+# ---------- TEST 3: UI RENDERING ----------
+def test_ui_rendering(driver):
+    driver.get(BASE_URL)
+
+    file_input = driver.find_element(By.NAME, "logfile")
+    file_input.send_keys(os.path.abspath("sample.log"))
+
+    driver.find_element(By.XPATH, "//button[contains(text(),'Analyze')]").click()
+
+    time.sleep(3)
+
+    page = driver.page_source.lower()
+
+    assert "warnings" in page
+    assert "infos" in page or "info" in page
+
+
+# ---------- TEST 4: INVALID FILE ----------
+def test_invalid_file(driver):
+    driver.get(BASE_URL)
+
+    file_input = driver.find_element(By.NAME, "logfile")
+    file_input.send_keys(os.path.abspath("invalid.log"))
+
+    driver.find_element(By.XPATH, "//button[contains(text(),'Analyze')]").click()
+
+    time.sleep(2)
+
+    # Ensure app does not crash
+    assert "traceback" not in driver.page_source.lower()
