@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
-        IMAGE = "xxxxxyyyy/smart-log-analyzer"
+        IMAGE = "xxxxxyyyy/smart-log-analyzer:latest"
         CONTAINER = "smart-log-analyzer-container"
     }
 
     stages {
 
-        stage('Clone') {
+        stage('Checkout') {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/sp25550/smart-log-analyzer.git'
@@ -40,35 +40,34 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                bat "docker build -t %IMAGE%:latest ."
+                bat "docker build -t %IMAGE% ."
             }
         }
 
         stage('Run Container') {
             steps {
                 bat "docker rm -f %CONTAINER% || exit /b 0"
-                bat "docker run -d -p 5000:5000 --name %CONTAINER% %IMAGE%:latest"
+                bat "docker run -d -p 5000:5000 --name %CONTAINER% %IMAGE%"
             }
         }
 
-        stage('Wait for App') {
+        stage('Wait for Flask App') {
             steps {
-                bat '''
-                powershell -Command "& {
-                    $url='http://127.0.0.1:5000';
-                    for ($i=0; $i -lt 30; $i++) {
-                        try {
-                            Invoke-WebRequest $url -UseBasicParsing -TimeoutSec 2 | Out-Null;
-                            Write-Host 'Server UP';
-                            exit 0;
-                        } catch {
-                            Write-Host ('Retry ' + $i);
-                            Start-Sleep 2;
-                        }
-                    }
-                    exit 1
-                }"
-                '''
+                bat """
+                powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+                "$url='http://127.0.0.1:5000'; ^
+                for ($i=0; $i -lt 30; $i++) { ^
+                    try { ^
+                        Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2 | Out-Null; ^
+                        Write-Host 'Server is UP'; ^
+                        exit 0 ^
+                    } catch { ^
+                        Write-Host ('Attempt ' + $i + ' failed'); ^
+                        Start-Sleep -Seconds 2 ^
+                    } ^
+                }; ^
+                Write-Host 'Server did not start'; exit 1"
+                """
             }
         }
 
@@ -78,7 +77,7 @@ pipeline {
             }
         }
 
-        stage('Docker Login + Push') {
+        stage('Docker Login & Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
@@ -86,7 +85,7 @@ pipeline {
                     passwordVariable: 'PASS'
                 )]) {
                     bat "echo %PASS% | docker login -u %USER% --password-stdin"
-                    bat "docker push %IMAGE%:latest"
+                    bat "docker push %IMAGE%"
                     bat "docker logout"
                 }
             }
@@ -95,7 +94,7 @@ pipeline {
 
     post {
         success {
-            echo "PIPELINE SUCCESS: Image built, tested, and pushed"
+            echo "PIPELINE SUCCESS: Build, Test, Run, Push completed"
         }
 
         failure {
