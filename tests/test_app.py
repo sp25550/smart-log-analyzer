@@ -110,3 +110,4 @@ def test_medium_severity():
     result = analyze_logs(file_path)
 
     assert result["logs"][0]["severity"] == "MEDIUM"
+    
