@@ -2,19 +2,16 @@ import sys
 import os
 import tempfile
 
-# add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app import analyze_logs
 
 
 def create_sample_log(content):
-    temp = tempfile.NamedTemporaryFile(delete=False, mode='w')
-    try:
-        temp.write(content)
-        return temp.name
-    finally:
-        temp.close()
+    temp = tempfile.NamedTemporaryFile(delete=False, mode="w")
+    temp.write(content)
+    temp.close()
+    return temp.name
 
 
 def test_error_count():
@@ -89,7 +86,9 @@ def test_top_error():
 
 
 def test_invalid_format():
-    file_path = create_sample_log("INVALID LOG LINE")
+    log = """INVALID LOG LINE"""
+
+    file_path = create_sample_log(log)
     result = analyze_logs(file_path)
 
     assert result["total"] == 0

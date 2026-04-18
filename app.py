@@ -4,8 +4,8 @@ from collections import Counter
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+UPLOAD_FOLDER = "uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -13,6 +13,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 def get_severity(line):
     line = line.lower()
+
     if "fatal" in line or "crash" in line:
         return "HIGH"
     elif "error" in line:
@@ -30,7 +31,7 @@ def analyze_logs(file_path):
     structured_logs = []
     error_messages = []
 
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         lines = file.readlines()
 
     for line in lines:
@@ -49,13 +50,15 @@ def analyze_logs(file_path):
         message = " ".join(parts[3:])
         severity = get_severity(line)
 
-        structured_logs.append({
-            "date": date,
-            "time": time,
-            "level": level,
-            "message": message,
-            "severity": severity
-        })
+        structured_logs.append(
+            {
+                "date": date,
+                "time": time,
+                "level": level,
+                "message": message,
+                "severity": severity,
+            }
+        )
 
         if level == "ERROR":
             errors += 1
@@ -77,25 +80,25 @@ def analyze_logs(file_path):
         "infos": infos,
         "error_rate": round(error_rate, 2),
         "logs": structured_logs,
-        "top_errors": top_errors
+        "top_errors": top_errors,
     }
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def index():
     result = None
 
-    if request.method == 'POST':
-        file = request.files['logfile']
+    if request.method == "POST":
+        file = request.files["logfile"]
 
         if file:
-            path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
             file.save(path)
 
             result = analyze_logs(path)
 
-    return render_template('index.html', result=result)
+    return render_template("index.html", result=result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
