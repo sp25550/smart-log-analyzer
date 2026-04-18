@@ -1,4 +1,4 @@
-﻿pipeline {
+pipeline {
     agent any
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
