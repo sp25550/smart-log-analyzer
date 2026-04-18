@@ -1,15 +1,22 @@
 ﻿pipeline {
     agent any
+
     environment {
         PYTHON = "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        IMAGE = "xxxxxyyyy/smart-log-analyzer:latest"
+        CONTAINER = "smart-log-analyzer-container"
+        APP_URL = "http://127.0.0.1:5000"
     }
+
     stages {
+
         stage('Clone') {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/sp25550/smart-log-analyzer.git'
             }
         }
+
         stage('Install Dependencies') {
             steps {
                 bat """
@@ -19,6 +26,7 @@
                 """
             }
         }
+
         stage('Run Unit Tests') {
             steps {
                 bat """
@@ -26,6 +34,7 @@
                 """
             }
         }
+
         stage('Code Quality (flake8)') {
             steps {
                 bat """
@@ -33,26 +42,51 @@
                 """
             }
         }
+
         stage('Build Docker Image') {
             steps {
-                bat "docker stop smart-log-analyzer-container || exit /b 0"
-                bat "docker rm smart-log-analyzer-container || exit /b 0"
-                bat "docker rmi xxxxxyyyy/smart-log-analyzer || exit /b 0"
-                bat "docker build -t xxxxxyyyy/smart-log-analyzer ."
+                bat """
+                docker stop %CONTAINER% || exit /b 0
+                docker rm %CONTAINER% || exit /b 0
+                docker rmi %IMAGE% || exit /b 0
+                docker build -t %IMAGE% .
+                """
             }
         }
+
         stage('Run Docker Container') {
             steps {
-                bat "docker run -d -p 5000:5000 --name smart-log-analyzer-container xxxxxyyyy/smart-log-analyzer"
+                bat """
+                docker run -d -p 5000:5000 --name %CONTAINER% %IMAGE%
+                """
             }
         }
+
         stage('Wait for Flask Server') {
             steps {
                 bat '''
-                powershell -Command "& { $url = 'http://127.0.0.1:5000'; for ($i = 0; $i -lt 30; $i++) { try { Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2 | Out-Null; Write-Host 'Server is up!'; exit 0 } catch { Write-Host ('Attempt ' + $i + ' failed, retrying...'); Start-Sleep -Seconds 2 } }; Write-Host 'Server did not start'; exit 1 }"
+                powershell -Command "
+                $url = 'http://127.0.0.1:5000'
+                $success = $false
+
+                for ($i = 0; $i -lt 30; $i++) {
+                    try {
+                        Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2 | Out-Null
+                        Write-Host 'Server is up!'
+                        $success = $true
+                        break
+                    } catch {
+                        Write-Host ('Attempt ' + $i + ' failed')
+                        Start-Sleep -Seconds 2
+                    }
+                }
+
+                if (-not $success) { exit 1 }
+                "
                 '''
             }
         }
+
         stage('Run Selenium UI Tests') {
             steps {
                 bat """
@@ -60,33 +94,38 @@
                 """
             }
         }
+
         stage('Push to Docker Hub') {
-    steps {
-        withCredentials([usernamePassword(credentialsId: 'docker-hub-creds',
-                                         usernameVariable: 'DOCKER_USER',
-                                         passwordVariable: 'DOCKER_PASS')]) {
-            bat """
-            echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-            docker push xxxxxyyyy/smart-log-analyzer:latest
-            """
-        }
-    }
-}
-        
-        stage('Build') {
             steps {
-                echo "Build and Deployment completed successfully"
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds',
+                                                 usernameVariable: 'DOCKER_USER',
+                                                 passwordVariable: 'DOCKER_PASS')]) {
+                    bat """
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                    IF %ERRORLEVEL% NEQ 0 exit /b 1
+
+                    docker push %IMAGE%
+                    IF %ERRORLEVEL% NEQ 0 exit /b 1
+                    """
+                }
+            }
+        }
+
+        stage('Build Complete') {
+            steps {
+                echo "Build + Test + Deploy SUCCESS ✔"
             }
         }
     }
+
     post {
         success {
-            echo "Pipeline SUCCESS - Image pushed to Docker Hub"
+            echo "Pipeline SUCCESS ✔ Image pushed to Docker Hub"
         }
+
         failure {
-            bat "docker stop smart-log-analyzer-container || exit /b 0"
-            bat "docker rm smart-log-analyzer-container || exit /b 0"
-            echo "Pipeline FAILED"
+            bat "docker rm -f %CONTAINER% || exit /b 0"
+            echo "Pipeline FAILED ❌"
         }
     }
 }
