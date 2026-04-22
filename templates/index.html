@@ -3,77 +3,76 @@
 <head>
     <title>Smart Log Analyzer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
 <div class="container">
 
-    <h1>Smart Log Analyzer</h1>
+    <h1>📊 Smart Log Analyzer Dashboard</h1>
 
     <div class="card">
-        <form method="POST" enctype="multipart/form-data">
-            <label>Upload Log File</label>
-            <input type="file" name="logfile" required>
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
 
-            <label>Search</label>
-            <input type="text" name="search" placeholder="Enter keyword...">
+            <!-- FIX: stable selector for Selenium -->
+            <input type="file" name="logfile" id="logfile" required>
 
-            <label>Filter</label>
-            <select name="filter">
-                <option value="">All</option>
-                <option value="ERROR">ERROR</option>
-                <option value="WARNING">WARNING</option>
-                <option value="INFO">INFO</option>
-            </select>
+            <!-- FIX: Selenium-safe button -->
+            <button type="submit" id="submitBtn">Analyze Logs</button>
 
-            <button type="submit">Analyze Logs</button>
         </form>
     </div>
 
     {% if result %}
-    <div class="card">
-        <h2>Summary</h2>
-      <div class="summary">
-    <div class="box error">Errors<br>{{ result.errors }}</div>
-    <div class="box warning">Warnings<br>{{ result.warnings }}</div>
-    <div class="box info">Info<br>{{ result.info }}</div>
-    <div class="box total">Total<br>{{ result.total }}</div>
-</div>
 
-        <p><b>Error Rate:</b> {{ result.error_rate }}%</p>
-
-        {% if result.freq_error %}
-            <p><b>Most Frequent Error:</b><br>
-            {{ result.freq_error[0] }} ({{ result.freq_error[1] }} times)</p>
-        {% endif %}
+    <!-- SUMMARY -->
+    <div class="summary">
+        <div class="box error">Errors<br>{{ result.errors }}</div>
+        <div class="box warning">Warnings<br>{{ result.warnings }}</div>
+        <div class="box info">Info<br>{{ result.infos }}</div>
+        <div class="box total">Total<br>{{ result.total }}</div>
     </div>
 
+    <p><b>Error Rate:</b> {{ result.error_rate }}%</p>
+
+    <!-- CHART -->
     <div class="card">
-        <h3>Error Timestamps</h3>
+        <canvas id="chart"></canvas>
+    </div>
+
+    <!-- TOP ERRORS -->
+    <div class="card">
+        <h3>🔥 Top 5 Errors</h3>
         <ul>
-            {% for t in result.timestamps %}
-                <li>{{ t }}</li>
+            {% for err, count in result.top_errors %}
+                <li>{{ err }} ({{ count }} times)</li>
             {% endfor %}
         </ul>
     </div>
 
+    <!-- LOG TABLE -->
     <div class="card">
-        <h3>All Errors</h3>
-        <ul>
-            {% for e in result.error_list %}
-                <li>{{ e }}</li>
+        <h3>📄 Logs</h3>
+        <table id="logTable">
+            <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Level</th>
+                <th>Message</th>
+                <th>Severity</th>
+            </tr>
+            {% for log in result.logs %}
+            <tr class="{{ log.severity }}">
+                <td>{{ log.date }}</td>
+                <td>{{ log.time }}</td>
+                <td>{{ log.level }}</td>
+                <td>{{ log.message }}</td>
+                <td>{{ log.severity }}</td>
+            </tr>
             {% endfor %}
-        </ul>
+        </table>
     </div>
 
-    <div class="card">
-        <h3>Critical Errors</h3>
-        <ul>
-            {% for c in result.critical %}
-                <li class="critical">{{ c }}</li>
-            {% endfor %}
-        </ul>
-    </div>
     {% endif %}
 
 </div>

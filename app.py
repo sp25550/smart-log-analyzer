@@ -110,5 +110,6 @@ def index():
 
 
 if __name__ == "__main__":
-    # IMPORTANT for Jenkins + Selenium stability
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+    # ✅ IMPORTANT FIX for Render deployment
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
