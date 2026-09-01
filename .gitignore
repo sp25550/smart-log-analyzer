@@ -1,4 +1,41 @@
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Virtual environments
 venv/
+.venv/
+ENV/
+env/
+
+# Environment configuration
 .env
+.env.*
+
+# Flask / app runtime
+uploads/
+instance/
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
